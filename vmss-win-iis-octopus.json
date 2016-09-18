@@ -1,0 +1,268 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "West US",
+        "East US",
+        "West Europe",
+        "East Asia",
+        "Southeast Asia"
+      ],
+      "metadata": {
+        "description": "Azure Region"
+      }
+    },
+    "vmStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account Name"
+      }
+    },
+    "vmStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Type of the Storage Account"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VM"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password"
+      }
+    },
+    "networkDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name used to access the IIS server via HTTP or RDP."
+      }
+    },
+    "octopusApiKey": {
+      "type": "string",
+      "metadata": {
+        "description": "API key to talk to Octopus Deploy server with."
+      }
+    },
+    "octopusServerUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "URL of Octopus Deploy server."
+      }
+    },
+    "octopusEnvironments": {
+      "type": "array",
+      "metadata": {
+        "description": "List of environments to register the tentacle in."
+      }
+    },
+    "octopusRoles": {
+      "type": "array",
+      "metadata": {
+        "description": "List of roles to register the tentacle with."
+      }
+    },
+    "octopusListenPort": {
+      "type": "string",
+      "defaultValue": "10933",
+      "metadata": {
+        "description": "List of environments to register the tentacle in."
+      }
+    }
+  },
+  "variables": {
+    "imageSKU": "2012-R2-Datacenter",
+    "virtualNetworkName": "IISVNet",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "vnetAddressPrefix": "10.0.0.0/16",
+    "subnet1Name": "IISSubnet-1",
+    "subnet1Prefix": "10.0.0.0/24",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+    "publicIPAddressType": "Dynamic",
+    "publicIPAddressName": "IISPublicIP",
+    "nicName": "IISNIC",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "vmExtensionName": "dscExtension",
+    "IISPowerShellModuleUrl": "https://github.com/tomhall/azure-templates/raw/master/WebServerConfig.ps1.zip",
+    "IISPowerShellModuleConfigurationFunction": "WebServerConfig.ps1\\WebServerConfig"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('vmStorageAccountName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "[parameters('vmStorageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('networkDnsName')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('vmStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('vmStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/CustomScriptExtension')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+         "publisher": "Microsoft.Compute",
+         "type": "CustomScriptExtension",
+          "typeHandlerVersion": "1.2",
+          "settings": {
+             "commandToExecute": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"iex ((new-object net.webclient).DownloadString('https://github.com/tomhall/azure-templates/raw/master/Install-OctopusDSC.ps1'))\""
+          }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/', variables('vmExtensionName'))]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "1.9",
+        "settings": {
+          "ModulesUrl": "[variables('IISPowerShellModuleUrl')]",
+          "SasToken": "",
+          "ConfigurationFunction": "[variables('IISPowerShellModuleConfigurationFunction')]",
+          "Properties": {
+            "ApiKey": "[parameters('octopusApiKey')]",
+            "OctopusServerUrl": "[parameters('octopusServerUrl')]",
+            "Environments": "[parameters('octopusEnvironments')]",
+            "Roles": "[parameters('octopusRoles')]",
+            "ListenPort": "[parameters('octopusListenPort')]"
+          }
+        },
+        "protectedSettings": null
+      }
+    }
+  ]
+}
