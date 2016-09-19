@@ -43,7 +43,7 @@
 		"Standard_A2",
 		"Standard_A3",
 		"Standard_A4"
-	  ]
+	  ],
 	  "metadata": {
         "description": "Size of the VM"
       }
@@ -229,19 +229,22 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/CustomScriptExtension')]",
+      "name": "[concat(parameters('vmName'),'/OctopusDSC')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
       "properties": {
-         "publisher": "Microsoft.Compute",
-         "type": "CustomScriptExtension",
-          "typeHandlerVersion": "1.2",
-          "settings": {
-             "commandToExecute": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"iex ((new-object net.webclient).DownloadString('https://github.com/tomhall/azure-templates/raw/master/Install-OctopusDSC.ps1'))\""
-          }
+		"publisher": "Microsoft.Compute",
+		"type": "CustomScriptExtension",
+		"typeHandlerVersion": "1.7",
+		"settings": {
+			"fileUris": [
+				"https://github.com/tomhall/azure-templates/raw/master/Install-OctopusDSC.ps1"
+			],
+			"commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File Install-OctopusDSC.ps1"
+		}
       }
     },
     {
@@ -250,7 +253,8 @@
       "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
+		"[concat('Microsoft.Compute/virtualMachines/extensions/', parameters('vmName'), '/OctopusDSC')]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
