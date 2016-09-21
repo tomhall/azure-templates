@@ -16,14 +16,12 @@
             "description":"Azure Region"
          }
       },
-      "vmStorageAccountName":{
-         "type":"String",
-         "metadata":{
-            "description":"Storage Account Name"
-         }
-      },
       "vmStorageAccountType":{
          "defaultValue":"Standard_LRS",
+         "allowedValues":[
+            "Standard_LRS",
+            "Premium_LRS"
+         ],
          "type":"String",
          "metadata":{
             "description":"Type of the Storage Account"
@@ -100,7 +98,9 @@
       }
    },
    "variables":{
-      "imageSKU":"2012-R2-Datacenter",
+      "vmName":"[parameters('vmName')]",
+      "vmStorageAccountName":"[toLower(concat(parameters('vmName'), uniqueString(resourceGroup().id)))]",
+      "nicName":"IISNIC",
       "virtualNetworkName":"IISVNet",
       "vnetID":"[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
       "vnetAddressPrefix":"10.0.0.0/16",
@@ -109,19 +109,18 @@
       "subnet1Ref":"[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
       "publicIPAddressType":"Dynamic",
       "publicIPAddressName":"IISPublicIP",
-      "nicName":"IISNIC",
+      "imageSKU":"2012-R2-Datacenter",
       "imagePublisher":"MicrosoftWindowsServer",
       "imageOffer":"WindowsServer",
-      "vmExtensionName":"dscExtension",
       "IISPowerShellModuleUrl":"https://github.com/tomhall/azure-templates/raw/master/WebServerConfig.ps1.zip",
       "IISPowerShellModuleConfigurationFunction":"WebServerConfig.ps1\\WebServerConfig",
-      "vmName":"[parameters('vmName')]",
-      "extensionName":"OctopusDSC"
+      "vmExtensionName":"dscExtension",
+      "octopusDscExtension":"OctopusDSC"
    },
    "resources":[
       {
          "type":"Microsoft.Storage/storageAccounts",
-         "name":"[parameters('vmStorageAccountName')]",
+         "name":"[variables('vmStorageAccountName')]",
          "apiVersion":"2015-05-01-preview",
          "location":"[parameters('location')]",
          "properties":{
@@ -211,7 +210,7 @@
                "osDisk":{
                   "name":"osdisk",
                   "vhd":{
-                     "uri":"[concat('http://',parameters('vmStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
+                     "uri":"[concat('http://',variables('vmStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
                   },
                   "caching":"ReadWrite",
                   "createOption":"FromImage"
@@ -226,13 +225,13 @@
             }
          },
          "dependsOn":[
-            "[concat('Microsoft.Storage/storageAccounts/', parameters('vmStorageAccountName'))]",
+            "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'))]",
             "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
          ]
       },
       {
          "type":"Microsoft.Compute/virtualMachines/extensions",
-         "name":"[concat(parameters('vmName'),'/OctopusDSC')]",
+         "name":"[concat(parameters('vmName'),'/', variables('octopusDscExtension'))]",
          "apiVersion":"2015-05-01-preview",
          "location":"[parameters('location')]",
          "properties":{
@@ -276,7 +275,7 @@
          },
          "dependsOn":[
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
-            "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName'), variables('extensionName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName'), variables('octopusDscExtension'))]"
          ]
       }
    ]
