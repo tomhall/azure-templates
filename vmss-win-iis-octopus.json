@@ -2,6 +2,13 @@
    "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
    "contentVersion":"1.0.0.0",
    "parameters":{
+      "vmsStackName": {
+        "type": "string",
+        "metadata": {
+          "description": "Scale Set name, also used in this template as a base for naming resources (hence limited to 9 characters or less)."
+        },
+        "maxLength": 10
+      },
       "location":{
          "defaultValue":"Southeast Asia",
          "allowedValues":[
@@ -109,9 +116,12 @@
       "subnet1Ref":"[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
       "publicIPAddressType":"Dynamic",
       "publicIPAddressName":"IISPublicIP",
-      "imageSKU":"2012-R2-Datacenter",
-      "imagePublisher":"MicrosoftWindowsServer",
-      "imageOffer":"WindowsServer",
+      "osType": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2012-R2-Datacenter",
+        "version": "latest"
+      },
       "IISPowerShellModuleUrl":"https://github.com/tomhall/azure-templates/raw/master/WebServerConfig.ps1.zip",
       "IISPowerShellModuleConfigurationFunction":"WebServerConfig.ps1\\WebServerConfig",
       "vmExtensionName":"dscExtension",
@@ -201,12 +211,7 @@
                "adminPassword":"[parameters('adminPassword')]"
             },
             "storageProfile":{
-               "imageReference":{
-                  "publisher":"[variables('imagePublisher')]",
-                  "offer":"[variables('imageOffer')]",
-                  "sku":"[variables('imageSKU')]",
-                  "version":"latest"
-               },
+               "imageReference": "[variables('osType')]",
                "osDisk":{
                   "name":"osdisk",
                   "vhd":{
