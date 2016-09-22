@@ -130,7 +130,6 @@
       },
       "IISPowerShellModuleUrl":"https://github.com/tomhall/azure-templates/raw/master/WebServerConfig.ps1.zip",
       "IISPowerShellModuleConfigurationFunction":"WebServerConfig.ps1\\WebServerConfig",
-      "vmExtensionName":"dscExtension",
       "octopusDscExtension":"OctopusDSC"
    },
    "resources":[
@@ -262,7 +261,7 @@
       },
       {
          "type":"Microsoft.Compute/virtualMachines/extensions",
-         "name":"[concat(parameters('vmName'),'/', variables('vmExtensionName'))]",
+         "name":"[concat(parameters('vmName'),'/webServerConfiguration')]",
          "apiVersion":"2015-05-01-preview",
          "location":"[parameters('location')]",
          "properties":{
