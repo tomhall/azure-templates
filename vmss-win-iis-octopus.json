@@ -2,12 +2,12 @@
    "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
    "contentVersion":"1.0.0.0",
    "parameters":{
-      "vmsStackName": {
-        "type": "string",
-        "metadata": {
-          "description": "Scale Set name, also used in this template as a base for naming resources (hence limited to 9 characters or less)."
-        },
-        "maxLength": 10
+      "vmsStackName":{
+         "type":"string",
+         "metadata":{
+            "description":"Scale Set name, also used in this template as a base for naming resources (hence limited to 9 characters or less)."
+         },
+         "maxLength":10
       },
       "location":{
          "defaultValue":"Southeast Asia",
@@ -96,7 +96,7 @@
             "description":"List of roles to register the tentacle with."
          }
       },
-	  "octopusMachinePolicy":{
+      "octopusMachinePolicy":{
          "type":"String",
          "metadata":{
             "description":"The Octopus Deploy Machine Policy to assign to the new tentacle."
@@ -115,18 +115,18 @@
       "vmStorageAccountName":"[toLower(concat(parameters('vmName'), uniqueString(resourceGroup().id)))]",
       "nicName":"IISNIC",
       "virtualNetworkName":"IISVNet",
-      "vnetID":"[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+      "vnetId":"[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
       "vnetAddressPrefix":"10.0.0.0/16",
       "subnet1Name":"IISSubnet-1",
       "subnet1Prefix":"10.0.0.0/24",
-      "subnet1Ref":"[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+      "subnet1Ref":"[concat(variables('vnetId'),'/subnets/', variables('subnet1Name'))]",
       "publicIPAddressType":"Dynamic",
       "publicIPAddressName":"IISPublicIP",
-      "osType": {
-        "publisher": "MicrosoftWindowsServer",
-        "offer": "WindowsServer",
-        "sku": "2012-R2-Datacenter",
-        "version": "latest"
+      "osType":{
+         "publisher":"MicrosoftWindowsServer",
+         "offer":"WindowsServer",
+         "sku":"2012-R2-Datacenter",
+         "version":"latest"
       },
       "IISPowerShellModuleUrl":"https://github.com/tomhall/azure-templates/raw/master/WebServerConfig.ps1.zip",
       "IISPowerShellModuleConfigurationFunction":"WebServerConfig.ps1\\WebServerConfig",
@@ -202,6 +202,78 @@
          ]
       },
       {
+         "type":"Microsoft.Network/loadBalancers",
+         "name":"[variables('loadBalancerName')]",
+         "apiVersion":"2015-05-01-preview",
+         "location":"[resourceGroup().location]",
+         "dependsOn":[
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+         ],
+         "properties":{
+            "frontendIPConfigurations":[
+               {
+                  "name":"LoadBalancerFrontEnd",
+                  "properties":{
+                     "publicIPAddress":{
+                        "id":"[variables('publicIPAddressID')]"
+                     }
+                  }
+               }
+            ],
+            "backendAddressPools":[
+               {
+                  "name":"bepool1"
+               }
+            ],
+            "loadBalancingRules":[
+               {
+                  "name":"HTTP Traffic",
+                  "properties":{
+                     "frontendIPConfiguration":{
+                        "id":"[variables('frontEndIPConfigID')]"
+                     },
+                     "backendAddressPool":{
+                        "id":"[variables('lbPoolID')]"
+                     },
+                     "protocol":"tcp",
+                     "frontendPort":80,
+                     "backendPort":80,
+                     "enableFloatingIP":false,
+                     "idleTimeoutInMinutes":5,
+                     "probe":{
+                        "id":"[variables('lbProbeID')]"
+                     }
+                  }
+               }
+            ],
+            "probes":[
+               {
+                  "name":"tcpProbe",
+                  "properties":{
+                     "protocol":"tcp",
+                     "port":80,
+                     "intervalInSeconds":"5",
+                     "numberOfProbes":"2"
+                  }
+               }
+            ],
+            "inboundNatPools":[
+               {
+                  "name":"RDP Traffic",
+                  "properties":{
+                     "frontendIPConfiguration":{
+                        "id":"[variables('frontEndIPConfigID')]"
+                     },
+                     "protocol":"tcp",
+                     "frontendPort":3389,
+                     "backendPort":3389,
+                     "enableFloatingIP":false
+                  }
+               }
+            ]
+         }
+      },
+      {
          "type":"Microsoft.Compute/virtualMachines",
          "name":"[parameters('vmName')]",
          "apiVersion":"2015-05-01-preview",
@@ -216,7 +288,7 @@
                "adminPassword":"[parameters('adminPassword')]"
             },
             "storageProfile":{
-               "imageReference": "[variables('osType')]",
+               "imageReference":"[variables('osType')]",
                "osDisk":{
                   "name":"osdisk",
                   "vhd":{
@@ -278,7 +350,7 @@
                   "OctopusServerUrl":"[parameters('octopusServerUrl')]",
                   "Environments":"[parameters('octopusEnvironments')]",
                   "Roles":"[parameters('octopusRoles')]",
-				  "MachinePolicy":"[parameters('octopusMachinePolicy')]",
+                  "MachinePolicy":"[parameters('octopusMachinePolicy')]",
                   "ListenPort":"[parameters('octopusListenPort')]"
                }
             },
