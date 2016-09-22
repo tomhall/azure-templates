@@ -96,6 +96,12 @@
             "description":"List of roles to register the tentacle with."
          }
       },
+	  "octopusMachinePolicy":{
+         "type":"String",
+         "metadata":{
+            "description":"The Octopus Deploy Machine Policy to assign to the new tentacle."
+         }
+      },
       "octopusListenPort":{
          "defaultValue":"10933",
          "type":"String",
@@ -273,6 +279,7 @@
                   "OctopusServerUrl":"[parameters('octopusServerUrl')]",
                   "Environments":"[parameters('octopusEnvironments')]",
                   "Roles":"[parameters('octopusRoles')]",
+				  "MachinePolicy":"[parameters('octopusMachinePolicy')]",
                   "ListenPort":"[parameters('octopusListenPort')]"
                }
             },

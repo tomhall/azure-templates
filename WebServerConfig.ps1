@@ -1,6 +1,6 @@
 Configuration WebServerConfig
 {
-    param ($ApiKey, $OctopusServerUrl, $Environments, $Roles, $ListenPort)
+    param ($ApiKey, $OctopusServerUrl, $Environments, $Roles, $MachinePolicy, $ListenPort)
 
     Import-DscResource -Module OctopusDSC
 
@@ -59,6 +59,7 @@ Configuration WebServerConfig
             OctopusServerUrl = $OctopusServerUrl;
             Environments = $Environments;
             Roles = $Roles;
+			MachinePolicy = $MachinePolicy;
 
             ListenPort = $ListenPort;
             DefaultApplicationDirectory = "C:\Applications"
