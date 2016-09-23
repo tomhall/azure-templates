@@ -9,6 +9,14 @@
          },
          "maxLength":10
       },
+	  "vmsInstanceCount":{
+         "type":"int",
+         "metadata":{
+            "description":"The number of virtual machine instances within this scale set."
+         },
+		 "minValue": 1,
+		 "maxValue": 10
+      },
       "location":{
          "defaultValue":"Southeast Asia",
          "allowedValues":[
@@ -66,12 +74,6 @@
             "description":"Admin password"
          }
       },
-      "networkDnsName":{
-         "type":"String",
-         "metadata":{
-            "description":"Unique DNS Name used to access the IIS server via HTTP or RDP."
-         }
-      },
       "octopusApiKey":{
          "type":"String",
          "metadata":{
@@ -112,102 +114,75 @@
    },
    "variables":{
       "vmName":"[parameters('vmName')]",
-      "vmStorageAccountName":"[toLower(concat(parameters('vmName'), uniqueString(resourceGroup().id)))]",
-      "nicName":"IISNIC",
-      "virtualNetworkName":"IISVNet",
+      "loadBalancerName": "[concat(parameters('vmsStackName'), 'lb')]",
+	  "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+	  "frontEndIPConfigID": "[concat(variables('lbID'), '/frontendIPConfigurations/loadBalancerFrontEnd')]",
+	  "backEndIPConfigID": "[concat(variables('lbID'), '/backendAddressPools/LoadBalancerBackEnd')]",
+	  "nicName":"[concat(parameters('vmsStackName'), 'nic')]",
+      "virtualNetworkName":"[concat(parameters('vmsStackName'), 'vnet')]",
       "vnetId":"[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
       "vnetAddressPrefix":"10.0.0.0/16",
-      "subnet1Name":"IISSubnet-1",
+      "subnet1Name":"[concat(parameters('vmsStackName'), 'subnet')]",
       "subnet1Prefix":"10.0.0.0/24",
       "subnet1Ref":"[concat(variables('vnetId'),'/subnets/', variables('subnet1Name'))]",
       "publicIPAddressType":"Dynamic",
-      "publicIPAddressName":"IISPublicIP",
+      "publicIPAddressName":"[concat(parameters('vmsStackName'), 'pip')]",
       "osType":{
          "publisher":"MicrosoftWindowsServer",
          "offer":"WindowsServer",
          "sku":"2012-R2-Datacenter",
          "version":"latest"
       },
+      "uniqueStringArray":[
+         "[toLower(concat(parameters('vmsStackName'), uniqueString(concat(resourceGroup().id, '0'))))]",
+         "[toLower(concat(parameters('vmsStackName'), uniqueString(concat(resourceGroup().id, '1'))))]",
+         "[toLower(concat(parameters('vmsStackName'), uniqueString(concat(resourceGroup().id, '2'))))]",
+         "[toLower(concat(parameters('vmsStackName'), uniqueString(concat(resourceGroup().id, '3'))))]",
+         "[toLower(concat(parameters('vmsStackName'), uniqueString(concat(resourceGroup().id, '4'))))]"
+      ],
+	  "vhdContainerName": "[concat(parameters('vmsStackName'), 'vhd')]",
+	  "osDiskName": "[concat(parameters('vmsStackName'), 'osdisk')]",
       "IISPowerShellModuleUrl":"https://github.com/tomhall/azure-templates/raw/master/WebServerConfig.ps1.zip",
       "IISPowerShellModuleConfigurationFunction":"WebServerConfig.ps1\\WebServerConfig",
       "octopusDscExtension":"OctopusDSC"
    },
    "resources":[
       {
+         "copy":{
+            "name":"storageLoop",
+            "count":5
+         },
          "type":"Microsoft.Storage/storageAccounts",
-         "name":"[variables('vmStorageAccountName')]",
-         "apiVersion":"2015-05-01-preview",
+         "name":"[variables('uniqueStringArray')[copyIndex()]]",
          "location":"[parameters('location')]",
+         "apiVersion":"2015-06-15",
+         "tags":{
+            "displayName":"StorageAccounts"
+         },
          "properties":{
-            "accountType":"[parameters('vmStorageAccountType')]"
+            "accountType":"[parameters('storageAccountType')]"
          }
       },
       {
          "type":"Microsoft.Network/publicIPAddresses",
          "name":"[variables('publicIPAddressName')]",
-         "apiVersion":"2015-05-01-preview",
+         "apiVersion":"2015-06-15",
          "location":"[parameters('location')]",
          "properties":{
             "publicIPAllocationMethod":"[variables('publicIPAddressType')]",
             "dnsSettings":{
-               "domainNameLabel":"[parameters('networkDnsName')]"
+               "domainNameLabel":"[parameters('vmsStackName')]"
             }
          }
       },
       {
-         "type":"Microsoft.Network/virtualNetworks",
-         "name":"[variables('virtualNetworkName')]",
-         "apiVersion":"2015-05-01-preview",
-         "location":"[parameters('location')]",
-         "properties":{
-            "addressSpace":{
-               "addressPrefixes":[
-                  "[variables('vnetAddressPrefix')]"
-               ]
-            },
-            "subnets":[
-               {
-                  "name":"[variables('subnet1Name')]",
-                  "properties":{
-                     "addressPrefix":"[variables('subnet1Prefix')]"
-                  }
-               }
-            ]
-         }
-      },
-      {
-         "type":"Microsoft.Network/networkInterfaces",
-         "name":"[variables('nicName')]",
-         "apiVersion":"2015-05-01-preview",
-         "location":"[parameters('location')]",
-         "properties":{
-            "ipConfigurations":[
-               {
-                  "name":"ipconfig1",
-                  "properties":{
-                     "privateIPAllocationMethod":"Dynamic",
-                     "publicIPAddress":{
-                        "id":"[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
-                     },
-                     "subnet":{
-                        "id":"[variables('subnet1Ref')]"
-                     }
-                  }
-               }
-            ]
-         },
+         "type":"Microsoft.Network/loadBalancers",
+         "name":"[variables('loadBalancerName')]",
+         "apiVersion":"2015-06-15",
+         "location":"[resourceGroup().location]",
          "dependsOn":[
             "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-         ]
-      },
-      {
-         "type":"Microsoft.Network/loadBalancers",
-         "name":"[variables('loadBalancerName')]",
-         "apiVersion":"2015-05-01-preview",
-         "location":"[resourceGroup().location]",
-         "dependsOn":[
-            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
          ],
          "properties":{
             "frontendIPConfigurations":[
@@ -222,7 +197,7 @@
             ],
             "backendAddressPools":[
                {
-                  "name":"bepool1"
+                  "name":"LoadBalancerBackEnd"
                }
             ],
             "loadBalancingRules":[
@@ -233,7 +208,7 @@
                         "id":"[variables('frontEndIPConfigID')]"
                      },
                      "backendAddressPool":{
-                        "id":"[variables('lbPoolID')]"
+                        "id":"[variables('backEndIPConfigID')]"
                      },
                      "protocol":"tcp",
                      "frontendPort":80,
@@ -272,6 +247,183 @@
                }
             ]
          }
+      },
+      {
+         "type":"Microsoft.Network/virtualNetworks",
+         "name":"[variables('virtualNetworkName')]",
+         "apiVersion":"2015-06-15",
+         "location":"[parameters('location')]",
+         "properties":{
+            "addressSpace":{
+               "addressPrefixes":[
+                  "[variables('vnetAddressPrefix')]"
+               ]
+            },
+            "subnets":[
+               {
+                  "name":"[variables('subnet1Name')]",
+                  "properties":{
+                     "addressPrefix":"[variables('subnet1Prefix')]"
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "type":"Microsoft.Compute/virtualMachineScaleSets",
+         "name":"[parameters('vmsStackName')]",
+         "location":"[variables('location')]",
+         "apiVersion":"2015-06-15",
+         "dependsOn":[
+            "storageLoop",
+            "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+            "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
+         ],
+         "sku":{
+            "name":"[parameters('vmSize')]",
+            "tier":"Standard",
+            "capacity":"[parameters('instanceCount')]"
+         },
+         "properties":{
+            "upgradePolicy":{
+               "mode":"Manual"
+            },
+            "virtualMachineProfile":{
+               "storageProfile":{
+                  "osDisk":{
+                     "vhdContainers":[
+                        "[concat('https://', variables('uniqueStringArray')[0], '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                        "[concat('https://', variables('uniqueStringArray')[1], '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                        "[concat('https://', variables('uniqueStringArray')[2], '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                        "[concat('https://', variables('uniqueStringArray')[3], '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                        "[concat('https://', variables('uniqueStringArray')[4], '.blob.core.windows.net/', variables('vhdContainerName'))]"
+                     ],
+                     "name":"[variables('osDiskName')]",
+                     "caching":"ReadOnly",
+                     "createOption":"FromImage"
+                  },
+                  "imageReference":"[variables('osType')]"
+               },
+               "osProfile":{
+                  "computerNamePrefix":"[parameters('vmsStackName')]",
+                  "adminUsername":"[parameters('adminUsername')]",
+                  "adminPassword":"[parameters('adminPassword')]"
+               },
+               "networkProfile":{
+                  "networkInterfaceConfigurations":[
+                     {
+                        "name":"[variables('nicName')]",
+                        "properties":{
+                           "primary":true,
+                           "ipConfigurations":[
+                              {
+                                 "name":"[variables('ipConfigName')]",
+                                 "properties":{
+                                    "subnet":{
+                                       "id":"[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                                    },
+                                    "loadBalancerBackendAddressPools":[
+                                       {
+                                          "id":"[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/LoadBalancerBackEnd')]"
+                                       }
+                                    ],
+                                    "loadBalancerInboundNatPools":[
+                                       {
+                                          "id":"[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatPools/', 'RDP Traffic')]"
+                                       }
+                                    ]
+                                 }
+                              }
+                           ]
+                        }
+                     }
+                  ]
+               },
+               "extensionProfile":{
+                  "extensions":[
+                     {
+                        "name":"Microsoft.Powershell.DSC",
+                        "properties":{
+                           "publisher":"Microsoft.Powershell",
+                           "type":"DSC",
+                           "typeHandlerVersion":"2.15",
+                           "autoUpgradeMinorVersion":true,
+                           "protectedSettings":{
+                              "Items":{
+                                 "registrationKeyPrivate":"[parameters('registrationKey')]"
+                              }
+                           },
+                           "settings":{
+                              "ModulesUrl":"https://raw.github.com/Azure/azure-quickstart-templates/master/201-vmss-automation-dsc/UpdateLCMforAAPull.zip",
+                              "SasToken":"",
+                              "ConfigurationFunction":"UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+                              "Properties":[
+                                 {
+                                    "Name":"RegistrationKey",
+                                    "Value":{
+                                       "UserName":"PLACEHOLDER_DONOTUSE",
+                                       "Password":"PrivateSettingsRef:registrationKeyPrivate"
+                                    },
+                                    "TypeName":"System.Management.Automation.PSCredential"
+                                 },
+                                 {
+                                    "Name":"RegistrationUrl",
+                                    "Value":"[parameters('registrationUrl')]",
+                                    "TypeName":"System.String"
+                                 }
+                              ]
+                           }
+                        }
+                     },
+                     {
+                        "name":"AzureDiagnostics",
+                        "properties":{
+                           "publisher":"Microsoft.Azure.Diagnostics",
+                           "type":"IaaSDiagnostics",
+                           "typeHandlerVersion":"1.5",
+                           "autoUpgradeMinorVersion":true,
+                           "settings":{
+                              "xmlCfg":"[base64(concat(variables('wadcfgxstart'), variables('wadmetricsresourceid'), parameters('vmsStackName'), variables('wadcfgxend')))]",
+                              "storageAccount":"[variables('diagnosticsStorageAccountName')]"
+                           },
+                           "protectedSettings":{
+                              "storageAccountName":"[variables('diagnosticsStorageAccountName')]",
+                              "storageAccountKey":"[listkeys(variables('accountid'), '2015-06-15').key1]",
+                              "storageAccountEndPoint":"https://core.windows.net"
+                           }
+                        }
+                     }
+                  ]
+               }
+            }
+         }
+      },
+      {
+         "type":"Microsoft.Network/networkInterfaces",
+         "name":"[variables('nicName')]",
+         "apiVersion":"2015-05-01-preview",
+         "location":"[parameters('location')]",
+         "properties":{
+            "ipConfigurations":[
+               {
+                  "name":"ipconfig1",
+                  "properties":{
+                     "privateIPAllocationMethod":"Dynamic",
+                     "publicIPAddress":{
+                        "id":"[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+                     },
+                     "subnet":{
+                        "id":"[variables('subnet1Ref')]"
+                     }
+                  }
+               }
+            ]
+         },
+         "dependsOn":[
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+         ]
       },
       {
          "type":"Microsoft.Compute/virtualMachines",
