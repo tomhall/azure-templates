@@ -119,6 +119,12 @@
 		 "metadata":{
             "description":"Octopus Tentacle Communication Style: Listening (TentaclePassive) or Polling (TentacleActive)."
          }
+      },
+	  "newRelicLicenseKey":{
+         "type":"String",
+		 "metadata":{
+            "description":"The New Relic License Key."
+         }
       }
    },
    "variables":{
@@ -377,7 +383,7 @@
                                  "https://github.com/tomhall/azure-templates/raw/master/Install-OctopusDSC.ps1",
                                  "https://github.com/tomhall/azure-templates/raw/master/Install-WebServerPrerequisites.ps1"
                               ],
-                              "commandToExecute":"powershell.exe -ExecutionPolicy Unrestricted -File Install-WebServerPrerequisites.ps1"
+                              "commandToExecute":"[concat('powershell.exe -ExecutionPolicy Unrestricted -File Install-WebServerPrerequisites.ps1 -NewRelicLicenseKey ', parameters('newRelicLicenseKey'))]"
                            }
                         }
                      },
