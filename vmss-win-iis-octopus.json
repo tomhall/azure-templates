@@ -108,6 +108,17 @@
          "metadata":{
             "description":"List of environments to register the tentacle in."
          }
+      },
+	  "octopusCommsStyle":{
+         "defaultValue":"TentacleActive",
+         "type":"String",
+         "allowedValues":[
+            "TentacleActive",
+            "TentaclePassive"
+         ],
+		 "metadata":{
+            "description":"Octopus Tentacle Communication Style: Listening (TentaclePassive) or Polling (TentacleActive)."
+         }
       }
    },
    "variables":{
@@ -387,7 +398,8 @@
                                  "Environments":"[parameters('octopusEnvironments')]",
                                  "Roles":"[parameters('octopusRoles')]",
                                  "MachinePolicy":"[parameters('octopusMachinePolicy')]",
-                                 "ListenPort":"[add(variables('octopusStartPort'), copyIndex())]"
+                                 "ListenPort":"[parameters('octopusListenPort')]",
+								 "CommsStyle":"[parameters('octopusCommsStyle')]"
                               }
                            }
                         }
