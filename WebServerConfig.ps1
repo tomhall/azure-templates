@@ -60,7 +60,8 @@ Configuration WebServerConfig
             Environments = $Environments;
             Roles = $Roles;
 			MachinePolicy = $MachinePolicy;
-
+			CommsStyle = $CommsStyle;
+			
             ListenPort = $ListenPort;
             DefaultApplicationDirectory = "C:\Applications"
         }

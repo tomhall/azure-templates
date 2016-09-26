@@ -19,6 +19,7 @@ function Get-TargetResource
         [string]$MachinePolicy,
 		[string]$DefaultApplicationDirectory,
         [int]$ListenPort,
+		[string]$CommsStyle = "TentaclePassive",
         [string]$tentacleDownloadUrl = "http://octopusdeploy.com/downloads/latest/OctopusTentacle",
         [string]$tentacleDownloadUrl64 = "http://octopusdeploy.com/downloads/latest/OctopusTentacle64"
     )
@@ -81,6 +82,7 @@ function Set-TargetResource
 		[string]$MachinePolicy,
         [string]$DefaultApplicationDirectory = "$($env:SystemDrive)\Applications",
         [int]$ListenPort = 10933,
+		[string]$CommsStyle = "TentaclePassive",
         [string]$tentacleDownloadUrl = "http://octopusdeploy.com/downloads/latest/OctopusTentacle",
         [string]$tentacleDownloadUrl64 = "http://octopusdeploy.com/downloads/latest/OctopusTentacle64"
     )
@@ -130,7 +132,7 @@ function Set-TargetResource
     elseif ($Ensure -eq "Present" -and $currentResource["Ensure"] -eq "Absent") 
     {
         Write-Verbose "Installing Tentacle..."
-        New-Tentacle -name $Name -apiKey $ApiKey -octopusServerUrl $OctopusServerUrl -port $ListenPort -environments $Environments -roles $Roles -machinePolicy $MachinePolicy -DefaultApplicationDirectory $DefaultApplicationDirectory -tentacleDownloadUrl $tentacleDownloadUrl -tentacleDownloadUrl64 $tentacleDownloadUrl64
+        New-Tentacle -name $Name -apiKey $ApiKey -octopusServerUrl $OctopusServerUrl -port $ListenPort -environments $Environments -roles $Roles -machinePolicy $MachinePolicy -DefaultApplicationDirectory $DefaultApplicationDirectory -commsStyle $CommsStyle -tentacleDownloadUrl $tentacleDownloadUrl -tentacleDownloadUrl64 $tentacleDownloadUrl64
         Write-Verbose "Tentacle installed!"
     }
 
@@ -264,6 +266,7 @@ function New-Tentacle
         [string]$machinePolicy,
 		[int] $port,
         [string]$DefaultApplicationDirectory,
+		[string]$commsStyle = "TentaclePassive",
         [string]$tentacleDownloadUrl = "http://octopusdeploy.com/downloads/latest/OctopusTentacle",
         [string]$tentacleDownloadUrl64 = "http://octopusdeploy.com/downloads/latest/OctopusTentacle64"
     )
@@ -328,8 +331,8 @@ function New-Tentacle
     Invoke-AndAssert { & .\tentacle.exe new-certificate --instance $name --console }
     Invoke-AndAssert { & .\tentacle.exe service --install --instance $name --console }
 
-    $registerArguments = @("register-with", "--instance", $name, "--server", $octopusServerUrl, "--name", $env:COMPUTERNAME, "--publicHostName", $ipAddress, "--apiKey", $apiKey, "--comms-style", "TentaclePassive", "--policy", $machinePolicy, "--force", "--console")
-
+    $registerArguments = @("register-with", "--instance", $name, "--server", $octopusServerUrl, "--name", $env:COMPUTERNAME, "--publicHostName", $ipAddress, "--apiKey", $apiKey, "--comms-style", $commsStyle, "--policy", $machinePolicy, "--force", "--console")
+	
     foreach ($environment in $environments) 
     {
         foreach ($e2 in $environment.Split(',')) 
