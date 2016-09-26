@@ -166,6 +166,7 @@ function Test-TargetResource
 		[string]$MachinePolicy,
         [string]$DefaultApplicationDirectory,
         [int]$ListenPort,
+		[string]$CommsStyle = "TentaclePassive",
         [string]$tentacleDownloadUrl = "http://octopusdeploy.com/downloads/latest/OctopusTentacle",
         [string]$tentacleDownloadUrl64 = "http://octopusdeploy.com/downloads/latest/OctopusTentacle64"
     )

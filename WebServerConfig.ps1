@@ -1,6 +1,6 @@
 Configuration WebServerConfig
 {
-    param ($ApiKey, $OctopusServerUrl, $Environments, $Roles, $MachinePolicy, $ListenPort)
+    param ($ApiKey, $OctopusServerUrl, $Environments, $Roles, $MachinePolicy, $ListenPort, $CommsStyle)
 
     Import-DscResource -Module OctopusDSC
 
