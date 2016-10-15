@@ -20,6 +20,13 @@ Configuration WebServerConfig
 			Name = "Web-Asp-Net45"
 		}
 
+		#Install Application Initialization
+		WindowsFeature AppInit
+		{
+			Ensure = "Present"
+			Name = "Web-AppInit"
+		}
+
 		#Install Static Content
 		WindowsFeature StaticContent
 		{
