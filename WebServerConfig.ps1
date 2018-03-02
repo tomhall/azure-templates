@@ -60,8 +60,8 @@ Configuration WebServerConfig
 		{
 			DependsOn = "[WindowsFeature]IIS"
 			Ensure = "Present"
-			Name = "IIS URL Rewrite Module 2"
-			Path = "http://download.microsoft.com/download/6/7/D/67D80164-7DD0-48AF-86E3-DE7A182D6815/rewrite_2.0_rtw_x64.msi"
+			Name = "IIS URL Rewrite Module 2.1"
+			Path = "http://download.microsoft.com/download/D/D/E/DDE57C26-C62C-4C59-A1BB-31D58B36ADA2/rewrite_amd64_en-US.msi"
 			Arguments = "/quiet"
 			ProductId = "EB675D0A-2C95-405B-BEE8-B42A65D23E11"
 		}
@@ -78,8 +78,8 @@ Configuration WebServerConfig
             OctopusServerUrl = $OctopusServerUrl;
             Environments = $Environments;
             Roles = $Roles;
-			MachinePolicy = $MachinePolicy;
-			CommsStyle = $CommsStyle;
+						MachinePolicy = $MachinePolicy;
+						CommsStyle = $CommsStyle;
 			
             ListenPort = $ListenPort;
             DefaultApplicationDirectory = "C:\Applications"
