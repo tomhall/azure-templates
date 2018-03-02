@@ -379,9 +379,9 @@
                            "settings":{
                               "fileUris":[
                                  "https://chocolatey.org/install.ps1",
-                                 "https://github.com/tomhall/azure-templates/raw/master/Install-NewRelic.ps1",
-                                 "https://github.com/tomhall/azure-templates/raw/master/Install-OctopusDSC.ps1",
-                                 "https://github.com/tomhall/azure-templates/raw/master/Install-WebServerPrerequisites.ps1"
+                                 "https://raw.github.com/tomhall/azure-templates/master/Install-NewRelic.ps1",
+                                 "https://raw.github.com/tomhall/azure-templates/master/Install-OctopusDSC.ps1",
+                                 "https://raw.github.com/tomhall/azure-templates/master/Install-WebServerPrerequisites.ps1"
                               ],
                               "commandToExecute":"[concat('powershell.exe -ExecutionPolicy Unrestricted -File Install-WebServerPrerequisites.ps1 -NewRelicLicenseKey ', parameters('newRelicLicenseKey'))]"
                            }
@@ -395,7 +395,7 @@
                            "typeHandlerVersion":"2.9",
                            "autoUpgradeMinorVersion":true,
                            "settings":{
-                              "ModulesUrl":"https://github.com/tomhall/azure-templates/raw/master/WebServerConfig.ps1.zip",
+                              "ModulesUrl":"https://raw.github.com/tomhall/azure-templates/master/WebServerConfig.ps1.zip",
                               "SasToken":"",
                               "ConfigurationFunction":"WebServerConfig.ps1\\WebServerConfig",
                               "Properties":{
