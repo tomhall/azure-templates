@@ -60,10 +60,10 @@ Configuration WebServerConfig
 		{
 			DependsOn = "[WindowsFeature]IIS"
 			Ensure = "Present"
-			Name = "IIS URL Rewrite Module 2.1"
+			Name = "IIS URL Rewrite Module 2"
 			Path = "http://download.microsoft.com/download/D/D/E/DDE57C26-C62C-4C59-A1BB-31D58B36ADA2/rewrite_amd64_en-US.msi"
 			Arguments = "/quiet"
-			ProductId = "EB675D0A-2C95-405B-BEE8-B42A65D23E11"
+			ProductId = "38D32370-3A31-40E9-91D0-D236F47E3C4A"
 		}
 		
 		#Install Octopus Deploy Tentacle
