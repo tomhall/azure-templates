@@ -47,13 +47,23 @@
          }
       },
       "vmSize":{
-         "defaultValue":"Standard_A1",
+         "defaultValue":"Standard_A1_v2",
          "allowedValues":[
             "Standard_A0",
             "Standard_A1",
             "Standard_A2",
             "Standard_A3",
-            "Standard_A4"
+            "Standard_A4",
+            "Standard_A5",
+            "Standard_A6",
+            "Standard_A7",
+            "Standard_A1_v2",
+            "Standard_A2_v2",
+            "Standard_A4_v2",
+            "Standard_A8_v2",
+            "Standard_A2m_v2",
+            "Standard_A4m_v2",
+            "Standard_A8m_v2"
          ],
          "type":"String",
          "metadata":{
