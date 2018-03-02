@@ -237,12 +237,31 @@
                      "frontendPort":80,
                      "backendPort":80,
                      "enableFloatingIP":false,
-                     "idleTimeoutInMinutes":5,
+                     "idleTimeoutInMinutes":4,
                      "probe":{
                         "id":"[variables('loadBalancerProbeId')]"
                      }
                   }
-               }
+               },
+               {
+                "name":"HTTPSTraffic",
+                "properties":{
+                   "frontendIPConfiguration":{
+                      "id":"[variables('frontendIPConfigurationId')]"
+                   },
+                   "backendAddressPool":{
+                      "id":"[variables('backendIPConfigurationId')]"
+                   },
+                   "protocol":"tcp",
+                   "frontendPort":443,
+                   "backendPort":443,
+                   "enableFloatingIP":false,
+                   "idleTimeoutInMinutes":4,
+                   "probe":{
+                      "id":"[variables('loadBalancerProbeId')]"
+                   }
+                }
+             }
             ],
             "probes":[
                {
