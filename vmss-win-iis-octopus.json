@@ -450,7 +450,7 @@
                   "rules":[
                      {
                         "metricTrigger":{
-                           "metricName":"\\Processor(_Total)\\% Processor Time",
+                           "metricName":"\\Processor\\PercentProcessorTime",
                            "metricNamespace":"",
                            "metricResourceUri":"[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/Microsoft.Compute/virtualMachineScaleSets/',parameters('vmsStackName'))]",
                            "timeGrain":"PT1M",
@@ -458,32 +458,32 @@
                            "timeWindow":"PT15M",
                            "timeAggregation":"Average",
                            "operator":"GreaterThan",
-                           "threshold":60.0
+                           "threshold":80.0
                         },
                         "scaleAction":{
                            "direction":"Increase",
                            "type":"ChangeCount",
                            "value":"1",
-                           "cooldown":"PT15M"
+                           "cooldown":"PT1M"
                         }
                      },
                      {
                         "metricTrigger":{
-                           "metricName":"\\Processor(_Total)\\% Processor Time",
+                           "metricName":"\\Processor\\PercentProcessorTime",
                            "metricNamespace":"",
                            "metricResourceUri":"[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/Microsoft.Compute/virtualMachineScaleSets/',parameters('vmsStackName'))]",
                            "timeGrain":"PT1M",
                            "statistic":"Average",
-                           "timeWindow":"PT15M",
+                           "timeWindow":"PT5M",
                            "timeAggregation":"Average",
                            "operator":"LessThan",
-                           "threshold":40.0
+                           "threshold":50.0
                         },
                         "scaleAction":{
                            "direction":"Decrease",
                            "type":"ChangeCount",
                            "value":"1",
-                           "cooldown":"PT15M"
+                           "cooldown":"PT5M"
                         }
                      }
                   ]
